@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include <libmodbus-3.0.6/src/modbus.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -9,151 +10,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
     _portSelector = new PortSelector();
     _portListener = new PortListener();
-//    craneWidget = new CraneWidget();
 
     _portSelector->show();
     connect(_portSelector, SIGNAL(accepted()),
             this, SLOT(show()));
     connect(_portSelector, SIGNAL(accepted(QString,QSerialPort::BaudRate,QSerialPort::DataBits,QSerialPort::FlowControl,QSerialPort::Parity,QSerialPort::StopBits)),
             _portListener, SLOT(setPortSettings(QString,QSerialPort::BaudRate,QSerialPort::DataBits,QSerialPort::FlowControl,QSerialPort::Parity,QSerialPort::StopBits)));
-//    connect(this, SIGNAL(writeInSocket(QByteArray)),
-//            _portListener, SLOT(writeInSocket(QByteArray&)));
-//    connect(portListener, SIGNAL(receivedMessage(Element,quint8)),
-//            this, SLOT(translateMessage(Element,quint8)));
-
-//    connect(craneWidget, SIGNAL(signalPowerOn()),
-//            this, SLOT(sendPowerOn()));
-//    connect(craneWidget, SIGNAL(signalPowerOff()),
-//            this, SLOT(sendPowerOff()));
-//    connect(craneWidget, SIGNAL(signalLightOn()),
-//            this, SLOT(sendLightOn()));
-//    connect(craneWidget, SIGNAL(signalLightOff()),
-//            this, SLOT(sendLightOff()));
-//    connect(craneWidget, SIGNAL(temperatureHigh()),
-//            this, SLOT(sendTemperatureHigh()));
-//    connect(craneWidget, SIGNAL(temperatureNormal()),
-//            this, SLOT(sendTemperatureNormal()));
-//    connect(craneWidget, SIGNAL(hookIsWarning()),
-//            this, SLOT(sendHookIsWarning()));
-//    connect(craneWidget, SIGNAL(hookIsNormal()),
-//            this, SLOT(sendHookIsNormal()));
-
     connect(_portListener, SIGNAL(signalGetData(QByteArray)),
             this, SLOT(readFromPort(QByteArray)));
     connect(_portListener, SIGNAL(connected(QString)),
             this, SLOT(setWindowTitle(QString)));
-
     connect(ui->actionSettings_port, SIGNAL(triggered()),
             _portSelector, SLOT(show()));
+
 }
 
 MainWindow::~MainWindow()
 {
     delete _portSelector;
     delete _portListener;
-//    delete craneWidget;
     delete ui;
 }
-
-//void MainWindow::translateMessage(Element el,quint8 mes)
-//{
-//    switch (el) {
-//    case powerButton:
-//        craneWidget->powerOn(mes);
-//        break;
-//    case lightButton:
-//        craneWidget->lightOn(mes);
-//        break;
-//    case soundSignal:
-//        craneWidget->soundSignalOn(mes);
-//        break;
-//    case pillarUp:
-//        craneWidget->pillarUp(mes);
-//        break;
-//    case pillarDown:
-//        craneWidget->pillarDown(mes);
-//        break;
-//    case derrickUp:
-//        craneWidget->derrickUp(mes);
-//        break;
-//    case derrickDown:
-//        craneWidget->derrickDown(mes);
-//        break;
-//    case outriggerUp:
-//        craneWidget->outriggerUp(mes);
-//        break;
-//    case outriggerDown:
-//        craneWidget->outriggerDown(mes);
-//        break;
-//    case telescopicUp:
-//        craneWidget->telescopicUp(mes);
-//        break;
-//    case telescopicDown:
-//        craneWidget->telescopicDown(mes);
-//        break;
-//    case hookUp:
-//        craneWidget->hookUp(mes);
-//        break;
-//    case hookDown:
-//        craneWidget->hookDown(mes);
-//        break;
-//    case leftCrutchUp:
-//        craneWidget->leftCrutchUp(mes);
-//        break;
-//    case leftCrutchDown:
-//        craneWidget->leftCrutchDown(mes);
-//        break;
-//    case rightCrutchUp:
-//        craneWidget->rightCrutchUp(mes);
-//        break;
-//    case rightCrutchDown:
-//        craneWidget->rightCrutchDown(mes);
-//        break;
-//    default:
-//        break;
-//    }
-//}
-
-
-//void MainWindow::sendPowerOn()
-//{
-//    portListener->sendMessage(powerStatus, 0x01);
-//}
-
-//void MainWindow::sendPowerOff()
-//{
-//    portListener->sendMessage(powerStatus, 0x00);
-//}
-
-//void MainWindow::sendLightOn()
-//{
-//    portListener->sendMessage(lightStatus, 0x01);
-//}
-
-//void MainWindow::sendLightOff()
-//{
-//    portListener->sendMessage(lightStatus, 0x00);
-//}
-
-//void MainWindow::sendTemperatureHigh()
-//{
-//    portListener->sendMessage(highTemperature, 0x01);
-//}
-
-//void MainWindow::sendTemperatureNormal()
-//{
-//    portListener->sendMessage(highTemperature, 0x00);
-//}
-
-//void MainWindow::sendHookIsWarning()
-//{
-//    portListener->sendMessage(hookWarning, 0x01);
-//}
-
-//void MainWindow::sendHookIsNormal()
-//{
-//    portListener->sendMessage(hookWarning, 0x00);
-//}
 
 void MainWindow::on_actionAbout_triggered()
 {
@@ -179,4 +56,48 @@ void MainWindow::on__plainTextEditWrite_textChanged()
 void MainWindow::readFromPort(QByteArray arr)
 {
     ui->_plainTextEditRead->setPlainText(ui->_plainTextEditRead->toPlainText()+QString(arr));
+}
+
+void MainWindow::on__pushButtonMB_clicked()
+{
+    modbus_t *mb;
+    uint16_t tab_reg[32]={};
+    mb =  modbus_new_rtu("\\\\.\\COM1", 9600, 'N', 8, 1);
+    if (mb == NULL)
+    {
+            qDebug() << "Unable to allocate libmodbus context\n";
+    }
+//    qDebug() << "mode: " << modbus_rtu_set_serial_mode(mb, MODBUS_RTU_RS232);
+    if (modbus_connect(mb) == -1) {
+        qDebug() << "Connection failed: %s\n" << modbus_strerror(errno);
+        modbus_free(mb);
+        return;
+    }
+    if (modbus_set_slave(mb, 1) == -1) //MODBUS_BROADCAST_ADDRESS
+    {
+        qDebug() << "Set slave failed: %s\n" << modbus_strerror(errno);
+        modbus_free(mb);
+        return;
+    }
+    /* Read 10 registers from the address 0 */
+    int rc = modbus_read_registers(mb, 0, 10, tab_reg);
+    if (rc == -1) {
+        qDebug() << modbus_strerror(errno);
+        return;
+    }
+
+    for(int i=0; i<10; i++)
+    {
+        qDebug() << i << ":" << tab_reg[i];
+        tab_reg[i]++;
+    }
+    /* Write 10 registers from the address 0 */
+    rc = modbus_write_registers(mb, 0, 10, tab_reg);
+    if (rc == -1) {
+        qDebug() << modbus_strerror(errno);
+        return;
+    }
+
+    modbus_close(mb);
+    modbus_free(mb);
 }

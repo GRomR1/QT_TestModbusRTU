@@ -39,6 +39,8 @@ private slots:
     void on__plainTextEditWrite_textChanged();
     void readFromPort(QByteArray arr);
 
+    void on__pushButtonMB_clicked();
+
 private:
     Ui::MainWindow      *ui;
     PortSelector        *_portSelector;

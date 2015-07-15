@@ -2,6 +2,8 @@ QT       += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+include(libmodbus-3.0.6/libmodbus.pri)
+
 TARGET = CraneEmulator
 TEMPLATE = app
 
