@@ -6,15 +6,18 @@
 #include <QSerialPort>
 #include <QMessageBox>
 #include "../Defines.h"
+#include <libmodbus-3.0.6/src/modbus.h>
+#define SLAVE_ID 1
 
 class PortListener : public QObject
 {
     Q_OBJECT
 public:
     explicit PortListener(QObject *parent = 0);
+    ~PortListener();
 
 public slots:
-    void setPortSettings(QString PortName,
+    void setPortSettings(QString portName,
                          QSerialPort::BaudRate baud,
                          QSerialPort::DataBits dataBits,
                          QSerialPort::FlowControl flow,
@@ -26,16 +29,17 @@ signals:
     void event(QString);                            //сигнал о событии
     void signalGetData(QByteArray);
     void connected(QString portName);
-//    void clientConnected(QString name, QString address);
-//                                                    //подключился клиент
-private:
-    QSerialPort             *_port;                 //последовательный порт
-    QByteArray               _arr;
-    void connectPort();                             //подключение к порту
 
 private slots:
     void readSocket();                              //считывание данных из порта
     void reportClose();                             //сообщить о закрытии порта
+                                     //подключился клиент
+private:
+    void connectPort();                             //подключение к порту
+    QSerialPort             *_port;                 //последовательный порт
+    QByteArray               _arr;
+    modbus_t                *_mb;
+    QString                 _location;
 
 
 };

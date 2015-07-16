@@ -55,6 +55,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="_pushButtonPass_2">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Send Pass</string>
               </property>
@@ -75,6 +78,9 @@
             </item>
             <item>
              <widget class="QPushButton" name="_pushButtonMac">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>Send Mac</string>
               </property>
@@ -166,7 +172,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="_menuSettings">

@@ -1,6 +1,5 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include <libmodbus-3.0.6/src/modbus.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
